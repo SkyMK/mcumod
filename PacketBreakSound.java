@@ -1,0 +1,59 @@
+package com.flansmod.common.network;
+
+import com.flansmod.common.FlansMod;
+import cpw.mods.fml.client.FMLClientHandler;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import net.minecraft.block.Block;
+import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.ResourceLocation;
+
+public class PacketBreakSound extends PacketBase {
+
+    public int x;
+    public int y;
+    public int z;
+    public int blockID;
+
+    public PacketBreakSound() {
+    }
+
+    public PacketBreakSound(int x, int y, int z, Block block) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.blockID = Block.getIdFromBlock(block);
+    }
+
+    public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
+        data.writeInt(this.x);
+        data.writeInt(this.y);
+        data.writeInt(this.z);
+        data.writeInt(this.blockID);
+    }
+
+    public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
+        this.x = data.readInt();
+        this.y = data.readInt();
+        this.z = data.readInt();
+        this.blockID = data.readInt();
+    }
+
+    public void handleServerSide(EntityPlayerMP playerEntity) {
+        FlansMod.log("Received block break sound packet on server. Skipping.");
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void handleClientSide(EntityPlayer clientPlayer) {
+        Block block = Block.getBlockById(this.blockID);
+        FMLClientHandler.instance().getClient().effectRenderer.addBlockHitEffects(this.x, this.y, this.z, 1);
+        FMLClientHandler.instance().getClient().getSoundHandler()
+                .playSound(new PositionedSoundRecord(new ResourceLocation(block.stepSound.getBreakSound()),
+                        (float) this.x + 0.5F, (float) this.y + 0.5F, (float) this.z + 0.5F,
+                        (block.stepSound.getVolume() + 1.0F) / 2.0F, block.stepSound.getPitch() * 0.8F));
+    }
+}
