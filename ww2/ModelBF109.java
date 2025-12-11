@@ -1,0 +1,87 @@
+package com.flansmod.client.model.ww2;
+
+import com.flansmod.client.model.ModelPlane;
+import com.flansmod.client.tmt.ModelRendererTurbo;
+
+public class ModelBF109 extends ModelPlane {
+
+    public ModelBF109() {
+        short textureX = 256;
+        short textureY = 128;
+        super.bodyModel = new ModelRendererTurbo[4];
+        super.bodyModel[0] = new ModelRendererTurbo(this, 0, 104, textureX, textureY);
+        super.bodyModel[1] = new ModelRendererTurbo(this, 60, 76, textureX, textureY);
+        super.bodyModel[2] = new ModelRendererTurbo(this, 60, 76, textureX, textureY);
+        super.bodyModel[3] = new ModelRendererTurbo(this, 0, 76, textureX, textureY);
+        super.bodyModel[0].addBox(-3.0F, 5.0F, -10.0F, 20, 2, 20);
+        super.bodyModel[1].addBox(-3.0F, -11.0F, -10.0F, 20, 16, 2);
+        super.bodyModel[2].addBox(-17.0F, -16.0F, -10.0F, 20, 16, 2);
+        super.bodyModel[2].rotateAngleY = 3.1415927F;
+        super.bodyModel[2].setPosition(0.0F, 5.0F, 0.0F);
+        super.bodyModel[3].addTrapezoid(-3.0F, -19.0F, -10.0F, 20, 8, 20, 0.0F, -3.0F, 4);
+        super.bodyWheelModel = new ModelRendererTurbo[4];
+        super.bodyWheelModel[0] = new ModelRendererTurbo(this, 116, 48, textureX, textureY);
+        super.bodyWheelModel[1] = new ModelRendererTurbo(this, 116, 48, textureX, textureY);
+        super.bodyWheelModel[2] = new ModelRendererTurbo(this, 200, 12, textureX, textureY);
+        super.bodyWheelModel[3] = new ModelRendererTurbo(this, 200, 12, textureX, textureY);
+        super.bodyWheelModel[0].addBox(-6.0F, 14.0F, 4.0F, 6, 6, 4, 0.0F);
+        super.bodyWheelModel[1].addBox(-6.0F, 14.0F, -8.0F, 6, 6, 4, 0.0F);
+        super.bodyWheelModel[2].addBox(-4.0F, 6.0F, 5.0F, 2, 8, 2, 0.0F);
+        super.bodyWheelModel[3].addBox(-4.0F, 6.0F, -7.0F, 2, 8, 2, 0.0F);
+        super.noseModel = new ModelRendererTurbo[2];
+        super.noseModel[0] = new ModelRendererTurbo(this, 0, 38, textureX, textureY);
+        super.noseModel[0].addTrapezoid(-51.0F, -16.0F, -10.0F, 48, 18, 20, 0.0F, -3.0F, 3);
+        super.noseModel[0].setPosition(0.0F, 5.0F, 0.0F);
+        super.noseModel[1] = new ModelRendererTurbo(this, 172, 12, textureX, textureY);
+        super.noseModel[1].addBox(0.0F, -2.0F, 0.0F, 4, 4, 4, 0.0F);
+        super.noseModel[1].setPosition(-55.0F, -2.0F, -2.0F);
+        super.bayModel = new ModelRendererTurbo[1];
+        super.bayModel[0] = new ModelRendererTurbo(this, 0, 0, textureX, textureY);
+        super.bayModel[0].addTrapezoid(17.0F, -16.0F, -10.0F, 76, 18, 20, 0.0F, -3.0F, 2);
+        super.bayModel[0].setPosition(0.0F, 5.0F, 0.0F);
+        super.tailWheelModel = new ModelRendererTurbo[2];
+        super.tailWheelModel[0] = new ModelRendererTurbo(this, 116, 48, textureX, textureY);
+        super.tailWheelModel[1] = new ModelRendererTurbo(this, 200, 12, textureX, textureY);
+        super.tailWheelModel[0].addBox(79.0F, 6.0F, -2.0F, 6, 6, 4, 0.0F);
+        super.tailWheelModel[1].addBox(81.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
+        super.rightWingModel = new ModelRendererTurbo[2];
+        super.rightWingModel[0] = new ModelRendererTurbo(this, 58, 48, textureX, textureY);
+        super.rightWingModel[1] = new ModelRendererTurbo(this, 172, 0, textureX, textureY);
+        super.rightWingModel[0].addBox(-25.0F, 3.0F, 0.0F, 32, 2, 78, 0.0F);
+        super.rightWingModel[1].addTrapezoid(-25.0F, 3.0F, 78.0F, 32, 2, 10, 0.0F, -1.0F, 1);
+        super.leftWingModel = new ModelRendererTurbo[2];
+        super.leftWingModel[0] = new ModelRendererTurbo(this, 58, 48, textureX, textureY);
+        super.leftWingModel[1] = new ModelRendererTurbo(this, 172, 0, textureX, textureY);
+        super.leftWingModel[0].addBox(-32.0F, -2.0F, -78.0F, 32, 2, 78);
+        super.leftWingModel[0].rotateAngleY = 3.1415927F;
+        super.leftWingModel[0].setPosition(-25.0F, 5.0F, -78.0F);
+        super.leftWingModel[1].addTrapezoid(-32.0F, 3.0F, -88.0F, 32, 2, 10, 0.0F, -1.0F, 1);
+        super.leftWingModel[1].rotateAngleY = 3.1415927F;
+        super.leftWingModel[1].setPosition(-25.0F, 0.0F, -166.0F);
+        super.propellerModels = new ModelRendererTurbo[1][3];
+        super.propellerModels[0][0] = new ModelRendererTurbo(this, 192, 12, textureX, textureY);
+        super.propellerModels[0][1] = new ModelRendererTurbo(this, 192, 12, textureX, textureY);
+        super.propellerModels[0][2] = new ModelRendererTurbo(this, 192, 12, textureX, textureY);
+        super.propellerModels[0][0].addBox(-0.0F, -12.0F, -1.0F, 2, 11, 2, 0.0F);
+        super.propellerModels[0][1].addBox(-0.0F, -12.0F, -1.0F, 2, 11, 2, 0.0F);
+        super.propellerModels[0][2].addBox(-0.0F, -12.0F, -1.0F, 2, 11, 2, 0.0F);
+        super.propellerModels[0][0].setRotationPoint(-54.0F, -2.0F, 0.0F);
+        super.propellerModels[0][1].setRotationPoint(-54.0F, -2.0F, 0.0F);
+        super.propellerModels[0][2].setRotationPoint(-54.0F, -2.0F, 0.0F);
+        super.yawFlapModel = new ModelRendererTurbo[1];
+        super.yawFlapModel[0] = new ModelRendererTurbo(this, 220, 12, textureX, textureY);
+        super.yawFlapModel[0].addBox(0.0F, 0.0F, 0.0F, 16, 20, 2, 0.0F);
+        super.yawFlapModel[0].setPosition(76.0F, -22.0F, -1.0F);
+        super.pitchFlapLeftModel = new ModelRendererTurbo[1];
+        super.pitchFlapLeftModel[0] = new ModelRendererTurbo(this, 220, 12, textureX, textureY);
+        super.pitchFlapLeftModel[0].addBox(0.0F, 0.0F, 0.0F, 16, 22, 2, 0.0F);
+        super.pitchFlapLeftModel[0].rotateAngleX = 1.570796F;
+        super.pitchFlapLeftModel[0].setPosition(76.0F, 1.0F, -22.0F);
+        super.pitchFlapRightModel = new ModelRendererTurbo[1];
+        super.pitchFlapRightModel[0] = new ModelRendererTurbo(this, 220, 12, textureX, textureY);
+        super.pitchFlapRightModel[0].addBox(0.0F, 0.0F, 0.0F, 16, 22, 2, 0.0F);
+        super.pitchFlapRightModel[0].rotateAngleX = 1.570796F;
+        super.pitchFlapRightModel[0].setPosition(76.0F, 1.0F, 0.0F);
+        this.flipAll();
+    }
+}
