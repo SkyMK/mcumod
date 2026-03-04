@@ -1,4 +1,4 @@
-package com.flansmod.client.model.zombie;
+package com.flansmod.client.model.mw;
 
 import com.flansmod.client.model.ModelGun;
 import com.flansmod.client.tmt.ModelRendererTurbo;
