@@ -1,8 +1,4 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
-
-package mcu.inventory.network;
+package mcu.looting.network;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.network.FMLEventChannel;
@@ -14,7 +10,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
@@ -25,44 +20,41 @@ import java.util.List;
 import java.util.Map;
 
 public class NetworkWrapper {
-    public static NetworkWrapper instance;
+    public static NetworkWrapper instance = new NetworkWrapper("lootingCChanel");
+    private final List<Class<? extends AbstractPacket>> ID_TO_PACKET = new ArrayList<>();
+    private final Map<Class<? extends AbstractPacket>, Short> PACKET_TO_ID = new HashMap<>();
 
-    static {
-        NetworkWrapper.instance = new NetworkWrapper("backpackmodChanel");
-    }
-
-    private final List<Class<? extends AbstractPacket>> ID_TO_PACKET;
-    private final Map<Class<? extends AbstractPacket>, Short> PACKET_TO_ID;
     private final FMLEventChannel channel;
     private final String name;
 
-    public NetworkWrapper(final String name) {
-        this.ID_TO_PACKET = new ArrayList<Class<? extends AbstractPacket>>();
-        this.PACKET_TO_ID = new HashMap<Class<? extends AbstractPacket>, Short>();
+    public NetworkWrapper(String name) {
         this.name = name;
-        (this.channel = NetworkRegistry.INSTANCE.newEventDrivenChannel(name)).register(this);
+        channel = NetworkRegistry.INSTANCE.newEventDrivenChannel(name);
+        channel.register(this);
     }
 
-    public void registerPacket(final Class<? extends AbstractPacket> packet) {
+    public void registerPacket(Class<? extends AbstractPacket> packet) {
         try {
-            packet.getDeclaredConstructor(new Class[0]);
+            packet.getDeclaredConstructor();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (!this.PACKET_TO_ID.containsKey(packet)) {
-            this.ID_TO_PACKET.add(packet);
-            this.PACKET_TO_ID.put(packet, (short) (this.ID_TO_PACKET.size() - 1));
+
+        if (!PACKET_TO_ID.containsKey(packet)) {
+            ID_TO_PACKET.add(packet);
+            PACKET_TO_ID.put(packet, (short) (ID_TO_PACKET.size() - 1));
         }
     }
 
     @SubscribeEvent
-    public void onServerPacket(final FMLNetworkEvent.ServerCustomPacketEvent e) {
-        if (!e.packet.channel().equals(this.name)) {
+    public void onServerPacket(FMLNetworkEvent.ServerCustomPacketEvent e) {
+        if (!e.packet.channel().equals(name)) {
             return;
         }
+
         try {
-            final ByteBuf buf = e.packet.payload();
-            final AbstractPacket msg = this.ID_TO_PACKET.get(buf.readShort()).newInstance();
+            ByteBuf buf = e.packet.payload();
+            AbstractPacket msg = ID_TO_PACKET.get(buf.readShort()).newInstance();
             msg.fromBytes(buf);
             msg.serverHandler(((NetHandlerPlayServer) e.handler).playerEntity);
         } catch (Throwable exc) {
@@ -72,13 +64,14 @@ public class NetworkWrapper {
 
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
-    public void onClientPacket(final FMLNetworkEvent.ClientCustomPacketEvent e) {
-        if (!e.packet.channel().equals(this.name)) {
+    public void onClientPacket(FMLNetworkEvent.ClientCustomPacketEvent e) {
+        if (!e.packet.channel().equals(name)) {
             return;
         }
+
         try {
-            final ByteBuf buf = e.packet.payload();
-            final AbstractPacket msg = this.ID_TO_PACKET.get(buf.readShort()).newInstance();
+            ByteBuf buf = e.packet.payload();
+            AbstractPacket msg = ID_TO_PACKET.get(buf.readShort()).newInstance();
             msg.fromBytes(buf);
             msg.clientHandler(Minecraft.getMinecraft().thePlayer);
         } catch (Throwable exc) {
@@ -86,35 +79,34 @@ public class NetworkWrapper {
         }
     }
 
-    private FMLProxyPacket createPacket(final AbstractPacket msg) {
-        final Class clazz = msg.getClass();
-        if (!this.PACKET_TO_ID.containsKey(clazz)) {
-            Minecraft.getMinecraft()
-                    .crashed(new CrashReport("Try to send unknow packet", new Throwable("Try to send unknow packet")));
+    private FMLProxyPacket createPacket(AbstractPacket msg) {
+        Class clazz = msg.getClass();
+        if (!PACKET_TO_ID.containsKey(clazz)) {
+            Minecraft.getMinecraft().crashed(new CrashReport("Try to send unknow packet", new Throwable("Try to send unknow packet")));
         }
-        final ByteBuf buf = msg.getOrCreateByteBuf();
-        buf.writeShort((int) this.PACKET_TO_ID.get(clazz));
+        ByteBuf buf = msg.getOrCreateByteBuf();
+        buf.writeShort(PACKET_TO_ID.get(clazz));
         msg.toBytes(buf);
-        return new FMLProxyPacket(new PacketBuffer(buf), this.name);
+        return new FMLProxyPacket(new PacketBuffer(buf), name);
     }
 
-    public void sendToServer(final AbstractPacket packet) {
-        this.channel.sendToServer(this.createPacket(packet));
+    public void sendToServer(AbstractPacket packet) {
+        channel.sendToServer(createPacket(packet));
     }
 
-    public void sendTo(final AbstractPacket packet, final EntityPlayerMP player) {
-        this.channel.sendTo(this.createPacket(packet), player);
+    public void sendTo(AbstractPacket packet, EntityPlayerMP player) {
+        channel.sendTo(createPacket(packet), player);
     }
 
-    public void sendToAll(final AbstractPacket packet) {
-        this.channel.sendToAll(this.createPacket(packet));
+    public void sendToAll(AbstractPacket packet) {
+        channel.sendToAll(createPacket(packet));
     }
 
-    public void sendToAllAround(final AbstractPacket packet, final NetworkRegistry.TargetPoint point) {
-        this.channel.sendToAllAround(this.createPacket(packet), point);
+    public void sendToAllAround(AbstractPacket packet, NetworkRegistry.TargetPoint point) {
+        channel.sendToAllAround(createPacket(packet), point);
     }
 
-    public void sendToDimension(final AbstractPacket packet, final int dimensionId) {
-        this.channel.sendToDimension(this.createPacket(packet), dimensionId);
+    public void sendToDimension(AbstractPacket packet, int dimensionId) {
+        channel.sendToDimension(createPacket(packet), dimensionId);
     }
 }

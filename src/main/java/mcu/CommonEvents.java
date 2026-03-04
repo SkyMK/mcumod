@@ -1,87 +1,74 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
+package mcu.looting.other;
 
-package mcu.inventory.other;
-
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.relauncher.Side;
-import mcu.client.gui.inventory.PlayerInventoryProperty;
-import mcu.inventory.network.NetworkWrapper;
-import mcu.inventory.network.packages.PackageInventorySync;
-import net.minecraft.entity.Entity;
+import mcu.looting.chest.BlockChest;
+import mcu.looting.chest.ChestsSaveData;
+import net.minecraft.block.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.Vec3;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
-import net.minecraftforge.common.IExtendedEntityProperties;
-import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-
-import java.util.HashMap;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import mcu.looting.network.NetworkWrapper;
+import mcu.looting.network.packages.PacketSyncChests;
 
 public class CommonEvents {
-    public static HashMap<String, Vec3> lightBlocks;
 
-    static {
-        CommonEvents.lightBlocks = new HashMap<String, Vec3>();
+    private boolean flag;
+
+    @SubscribeEvent
+    public void breakSpeed(PlayerEvent.BreakSpeed e) {
+        if (!e.entityPlayer.capabilities.isCreativeMode)
+            e.setCanceled(true);
     }
 
     @SubscribeEvent
-    public void entityConstruct(final EntityEvent.EntityConstructing e) {
-        if (e.entity instanceof EntityPlayer && e.entity.getExtendedProperties("PlayerInventoryProperty") == null) {
-            e.entity.registerExtendedProperties("PlayerInventoryProperty",
-                    new PlayerInventoryProperty((EntityPlayer) e.entity));
+    public void blockBreak(BlockEvent.BreakEvent e) {
+        if ((e.block instanceof BlockTallGrass || e.block instanceof BlockGlass || e.block instanceof BlockFlower || e.block instanceof BlockDoublePlant) && !e.getPlayer().capabilities.isCreativeMode)
+            e.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public void join(EntityJoinWorldEvent e) {
+        if (e.world != null && !e.world.isRemote && e.entity instanceof EntityPlayer) {
+            NetworkWrapper.instance.sendTo(new PacketSyncChests(), (EntityPlayerMP) e.entity);
         }
     }
 
     @SubscribeEvent
-    public void entityJoinWorld(final EntityJoinWorldEvent e) {
-        if (FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT || !(e.entity instanceof EntityPlayer)) {
-            return;
-        }
-        final EntityPlayer player = (EntityPlayer) e.entity;
-        final PlayerInventoryProperty data = PlayerInventoryProperty.get(player);
-        if (data != null) {
-            NetworkWrapper.instance.sendTo(new PackageInventorySync(PlayerInventoryProperty.get(player)),
-                    (EntityPlayerMP) player);
-        }
-    }
-
-    @SubscribeEvent
-    public void playerStartedTracking(final PlayerEvent.StartTracking e) {
-        final PlayerInventoryProperty data = PlayerInventoryProperty.get(e.target);
-        if (data != null) {
-            NetworkWrapper.instance.sendTo(
-                    new PackageInventorySync(PlayerInventoryProperty.get(e.entityPlayer)),
-                    (EntityPlayerMP) e.entityPlayer);
+    public void tick(TickEvent.ServerTickEvent e) {
+        World world = MinecraftServer.getServer().getEntityWorld();
+        if (world.getTotalWorldTime() % 20 == 0) {
+            ChestsSaveData data = ChestsSaveData.getOrCreateData(world);
+            for (mcu.looting.chest.BlockChest.ChestOnMap chest : data.chests) {
+                if (chest.timeToSpawn == 0)
+                    continue;
+                else if (chest.timeToSpawn == 1) {
+                    chest.timeToSpawn = 0;
+                    world.setBlock((int) chest.pos.x, (int) chest.pos.y, (int) chest.pos.z, ModItems.chestBlock, chest.meta, 2);
+                    data.markDirty();
+                } else {
+                    chest.timeToSpawn--;
+                }
+            }
         }
     }
 
     @SubscribeEvent
-    public void onClonePlayer(final PlayerEvent.Clone e) {
-        if (e.wasDeath) {
-            final NBTTagCompound compound = new NBTTagCompound();
-            PlayerInventoryProperty.get(e.original).saveNBTData(compound);
-            PlayerInventoryProperty.get(e.entityPlayer).loadNBTData(compound);
-            PlayerInventoryProperty.get(e.entityPlayer).markDirty((EntityPlayerMP) e.entityPlayer);
+    public void load(WorldEvent.Load e) {
+        if (!e.world.isRemote) {
+            ChestsSaveData data = ChestsSaveData.getOrCreateData(e.world);
+            for (mcu.looting.chest.BlockChest.ChestOnMap chest : data.chests) {
+                chest.timeToSpawn = 0;
+                Block block = e.world.getBlock((int) chest.pos.x, (int) chest.pos.y, (int) chest.pos.z);
+                if (block == null || !(block instanceof BlockChest))
+                    e.world.setBlock((int) chest.pos.x, (int) chest.pos.y, (int) chest.pos.z, ModItems.chestBlock, chest.meta, 2);
+            }
+            data.markDirty();
         }
-    }
-
-    @SubscribeEvent
-    public void tickServer(final TickEvent.ServerTickEvent e) {
-    }
-
-    private void deleteLight(final String name, final World world) {
-    }
-
-    private boolean handleFlashlight(final ItemStack stack) {
-
-        return true;
     }
 }

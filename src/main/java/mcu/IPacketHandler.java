@@ -1,4 +1,4 @@
-package mcu.friend.network;
+package mcu.network;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -9,9 +9,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.WorldServer;
 
-/**
- * @author Agravaine
- */
 public interface IPacketHandler {
 
     @SideOnly(Side.CLIENT)

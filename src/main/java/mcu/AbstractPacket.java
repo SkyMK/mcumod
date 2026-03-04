@@ -1,8 +1,5 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
+package mcu.looting.network;
 
-package mcu.inventory.network;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
@@ -11,13 +8,15 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 public abstract class AbstractPacket implements IMessage {
-    public abstract void toBytes(final ByteBuf p0);
+    @Override
+    public abstract void toBytes(ByteBuf buf);
 
-    public abstract void fromBytes(final ByteBuf p0);
+    @Override
+    public abstract void fromBytes(ByteBuf buf);
 
-    public abstract void clientHandler(final EntityPlayer p0);
+    public abstract void clientHandler(EntityPlayer player);
 
-    public abstract void serverHandler(final EntityPlayerMP p0);
+    public abstract void serverHandler(EntityPlayerMP player);
 
     public ByteBuf getOrCreateByteBuf() {
         return Unpooled.buffer();

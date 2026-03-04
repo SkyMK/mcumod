@@ -1,16 +1,11 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
-
-package mcu.inventory;
-
-import net.minecraft.util.ResourceLocation;
+package mcu.looting;
 
 public class Reference {
+    public static final String MOD_ID = "lootingchestsmod";
+    public static final String NAME = "Looting Chests Mod";
     public static final String VERSION = "1.0.0";
-    public static final ResourceLocation inventoryTexture;
+    public static final String ACCEPTED_VERSIONS = "[1.7.10]";
 
-    static {
-        inventoryTexture = new ResourceLocation("backpackmod", "textures/inventory.png");
-    }
+    public static final String CLIENT_PROXY_CLASS = "mcu.looting.proxy.ClientProxy";
+    public static final String SERVER_PROXY_CLASS = "mcu.looting.proxy.ServerProxy";
 }

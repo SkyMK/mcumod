@@ -1,4 +1,4 @@
-package mcu.friend.network;
+package mcu.network;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -12,6 +12,8 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import mcu.client.hud.RadarEntry;
+import mcu.spawnsystem.SpawnSystem.Spot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -22,6 +24,7 @@ import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.WorldServer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.UUID;
@@ -88,7 +91,7 @@ public class NetworkManager {
         channel.sendToDimension(packet, id);
     }
 
-    public <T> FMLProxyPacket createPacket(byte id, T... data) {
+    public <T> FMLProxyPacket createPacket(int id, T... data) {
         return createPacket(Unpooled.buffer(32), id, data);
     }
 
@@ -97,7 +100,7 @@ public class NetworkManager {
         return new FMLProxyPacket(buf, packetHandler.getChannel());
     }
 
-    public <T> FMLProxyPacket createPacket(ByteBuf buf, byte id, T... data) {
+    public <T> FMLProxyPacket createPacket(ByteBuf buf, int id, T... data) {
         buf.writeByte(id);
 
         for (T value : data) {
@@ -108,8 +111,33 @@ public class NetworkManager {
     }
 
     private <T> void writeData(ByteBuf buf, T value) {
-        if (value instanceof Byte) {
+        if (value instanceof ArrayList) {
+            if (((ArrayList) value).size() > 0)
+                if (((ArrayList) value).get(0) instanceof RadarEntry) {
+                    ArrayList<RadarEntry> entities = (ArrayList<RadarEntry>) value;
+                    buf.writeInt(entities.size());
+                    for (RadarEntry entry : entities) {
+                        buf.writeByte(entry.posX);
+                        buf.writeByte(entry.posZ);
+                        buf.writeByte(entry.id);
+                    }
+                } else {
+                    ArrayList<Spot> spots = (ArrayList<Spot>) value;
+                    buf.writeInt(spots.size());
+                    for (Spot s : spots) {
+                        buf.writeInt(s.x);
+                        buf.writeInt(s.z);
+                        ByteBufUtils.writeUTF8String(buf, s.name);
+                    }
+                }
+        } else if (value instanceof Byte) {
             buf.writeByte((Byte) value);
+        } else if (value instanceof byte[]) {
+            byte[] bytez = (byte[]) value;
+            buf.writeInt(bytez.length);
+            for (byte b : bytez) {
+                buf.writeByte(b);
+            }
         } else if (value instanceof Boolean) {
             buf.writeBoolean((Boolean) value);
         } else if (value instanceof Short) {

@@ -1,22 +1,14 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
+package mcu.looting.network;
 
-package mcu.inventory.network;
-
-import mcu.inventory.network.packages.*;
+import mcu.looting.network.packages.PacketSyncChests;
 
 public class PacketRegister {
-    private static final Class[] packets;
-
-    static {
-        packets = new Class[]{PackageInventorySync.class, PackageOpenGui.class, PackageDropItem.class,
-                TakePacket.class, NotifySlotPacket.class};
-    }
+    public static final Class[] packets = new Class[]{
+            PacketSyncChests.class
+    };
 
     public static void register() {
-        for (final Class packet : PacketRegister.packets) {
+        for (Class packet : packets)
             NetworkWrapper.instance.registerPacket(packet);
-        }
     }
 }
