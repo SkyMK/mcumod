@@ -1,4 +1,4 @@
-package mcu.network;
+package mcu.trade.network;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -9,13 +9,12 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.WorldServer;
 
-public interface IPacketHandler {
+public interface IPacketHandler{
 
     @SideOnly(Side.CLIENT)
-    void handleClientSide(PacketBuffer buf, byte id, Minecraft mc, WorldClient world,
-                          EntityClientPlayerMP player);
+    public void handleClientSide(PacketBuffer buf, byte id, Minecraft mc, WorldClient world, EntityClientPlayerMP player);
 
-    void handleServerSide(PacketBuffer buf, byte id, WorldServer world, EntityPlayerMP player);
+    public void handleServerSide(PacketBuffer buf, byte id, WorldServer world, EntityPlayerMP player);
 
-    String getChannel();
+    public String getChannel();
 }

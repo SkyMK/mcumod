@@ -1,468 +1,315 @@
-// 
-// Decompiled by Procyon v0.5.36
-// 
+package mcu.trade.inventory;
 
-package mcu.client.gui.trade;
-
-import cpw.mods.fml.common.network.ByteBufUtils;
-import mcu.DayZ;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
+import cpw.mods.fml.common.network.internal.FMLProxyPacket;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import mcu.trade.TradeMod;
+import mcu.trade.entity.TradePlayer;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
+import mcu.trade.network.TradePacketHandler;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.awt.*;
 
-public class GuiTrade extends GuiScreen {
-    public static final GuiTrade INSTANCE;
-    public static final Minecraft mc;
-    public static final RenderItem itemRenderer;
-    public static final int LOCK_TICKS = 60;
+@SideOnly(Side.CLIENT)
+public class GuiTrade extends GuiContainer{
 
-    static {
-        INSTANCE = new GuiTrade();
-        mc = Minecraft.getMinecraft();
-        itemRenderer = new RenderItem();
+    private static final ResourceLocation TEXTURE = new ResourceLocation(TradeMod.MOD_ID, "textures/gui/trade.png");
+    private static final ResourceLocation DEFAULT_AVATAR = new ResourceLocation(TradeMod.MOD_ID, "textures/gui/default_avatar.png");
+
+    private TradePlayer tradePlayer;
+    private TradePlayer otherPlayer;
+
+    private boolean isReady;
+    private int readyTime;
+    private int playerMoney, otherMoney;
+    private final boolean isCreator;
+
+    private GuiButton buttonReady, buttonCancel, buttonSetMoney;
+    private GuiTextField textFieldMoney;
+
+    public GuiTrade(EntityPlayer player, int tradePlayerMoney, int otherPlayerMoney, boolean creator){
+        super(new ContainerTrade(player));
+        tradePlayer = TradePlayer.forPlayer(player);
+        otherPlayer = TradePlayer.forPlayer(tradePlayer.other);
+        playerMoney = tradePlayerMoney;
+        otherMoney = otherPlayerMoney;
+        isCreator = creator;
+        xSize = 242;
+        ySize = 219;
     }
 
-    public final List<ItemButton> inventoryItems;
-    public final List<ItemButton> selectedItems;
-    public final List<Integer> selectedSlots;
-    public final List<ItemButton> otherItems;
-    public GuiTextField input;
-    public String exchangingWithPlayer;
-    public int ownBalance;
-    public int otherBalance;
-    public int ownCash;
-    public int otherCash;
-    public boolean lockInput;
-    public boolean ready;
-    public boolean otherReady;
-    public ItemButton hoveredButton;
-    public ColoredButton readyButton;
-    public int readyLock;
-    public int transaction;
+    public void initGui(){
+        super.initGui();
 
-    public GuiTrade() {
-        this.inventoryItems = new ArrayList<ItemButton>();
-        this.selectedItems = new ArrayList<ItemButton>();
-        this.selectedSlots = new ArrayList<Integer>();
-        this.otherItems = new ArrayList<ItemButton>();
-        this.ownBalance = -1;
-        this.otherBalance = -1;
+        buttonList.add(buttonReady = new GuiButton(0, guiLeft + xSize - 68, guiTop + ySize - 29, 60, 10, I18n.format("gui.trade.button.ready")));
+        buttonList.add(buttonCancel = new GuiButton(1, guiLeft + xSize - 68, guiTop + ySize - 17, 60, 10, I18n.format("gui.trade.button.cancel")));
+        buttonList.add(buttonSetMoney = new GuiButton(2, guiLeft + xSize - 68, guiTop + ySize - 41, 60, 10, I18n.format("gui.trade.button.setMoney")));
+
+        textFieldMoney = new GuiTextField(fontRendererObj, guiLeft + xSize - 68, guiTop + ySize - 56, 60, 10);
+        textFieldMoney.setMaxStringLength(8);
     }
 
-    public static void drawItemStack(final ItemStack stack, final int x, final int y) {
-        Minecraft mc = Minecraft.getMinecraft();
-        GL11.glTranslatef(0.0f, 0.0f, 32.0f);
-        itemRender.zLevel = 200.0f;
-        FontRenderer font = null;
-        if (stack != null) {
-        }
-        if (font == null) {
-            font = mc.fontRenderer;
-        }
-        itemRender.renderItemAndEffectIntoGUI(font, mc.getTextureManager(), stack, x, y);
-        GL11.glTranslatef(itemRender.zLevel = 0.0f, 0.0f, -32.0f);
-        RenderHelper.disableStandardItemLighting();
-    }
+    public void actionPerformed(GuiButton button){
+        if(button == buttonReady){
+            isReady = !isReady;
+            button.displayString = isReady ? I18n.format("gui.trade.button.notReady") : I18n.format("gui.trade.button.ready");
+            FMLProxyPacket packet = TradeMod.network.createPacket(TradePacketHandler.I_AM_READY, isReady);
+            TradeMod.network.sendToServer(packet);
+        }else if(button == buttonCancel){
+            mc.thePlayer.closeScreen();
+        }else if(button == buttonSetMoney){
+            int money = MathHelper.parseIntWithDefault(textFieldMoney.getText(), 0);
+            if(money >= 1 && money < 10){
+                money += 1;
+            }else{
+                money += MathHelper.floor_float(money * 0.1F);
+            }
+            if(money > playerMoney){
+                money = playerMoney;
+                textFieldMoney.setText(String.valueOf(MathHelper.floor_float(money - money * 0.1F)));
+            }
 
-    public void read(int id, PacketBuffer buf) {
-        if (id == 0) {
-            exchangingWithPlayer = ByteBufUtils.readUTF8String(buf);
-        }
-    }
-
-    public <T> void sendToOther(int id, T... objects) {
-        DayZ.network.sendToServer(DayZ.network.createPacket(id, exchangingWithPlayer, objects));
-    }
-
-    public void actionPerformed(GuiButton b) {
-        if (b.id >= 0 && b.id <= 35) {
-            sendToOther(65, b.id);
-        }
-    }
-
-    public void open() {
-        for (int i = 0; i < GuiTrade.mc.thePlayer.inventory.mainInventory.length; ++i) {
-            final ItemStack ItemStack = GuiTrade.mc.thePlayer.inventory.mainInventory[i];
-            if (ItemStack != null) {
-                this.inventoryItems.add(new ItemButton(i, ItemStack));
+            if(money >= 0){
+                FMLProxyPacket packet = TradeMod.network.createPacket(TradePacketHandler.GIVE_MONEY, money);
+                TradeMod.network.sendToServer(packet);
             }
         }
     }
 
     @Override
-    public void initGui() {
-        if (this.exchangingWithPlayer == null) {
-            this.open();
-        }
-        this.buttonList.clear();
-        final int n = this.width / 2 - 125;
-        final int n2 = this.height / 2 - 115;
-        for (final ItemButton itemButton : this.inventoryItems) {
-            if (this.selectedSlots.contains(itemButton.id)) {
-                continue;
-            }
-            this.buttonList.add(itemButton);
-            itemButton.xPosition = itemButton.id % 9 * 18 + n + 10;
-            itemButton.yPosition = itemButton.id / 9 * 18 + n2 + 230 - 10 - 90;
-            if (itemButton.id < 9) {
-                final ItemButton itemButton2 = itemButton;
-                itemButton2.yPosition += 72;
-            }
-            final ItemButton itemButton3 = itemButton;
-            ++itemButton3.xPosition;
-            final ItemButton itemButton4 = itemButton;
-            ++itemButton4.yPosition;
-        }
-        int n3 = 0;
-        for (final ItemButton itemButton5 : this.selectedItems) {
-            this.buttonList.add(itemButton5);
-            itemButton5.xPosition = n3 % 6 * 18 + n + 10;
-            itemButton5.yPosition = n3 / 6 * 18 + n2 + 28;
-            final ItemButton itemButton6 = itemButton5;
-            ++itemButton6.xPosition;
-            final ItemButton itemButton7 = itemButton5;
-            ++itemButton7.yPosition;
-            ++n3;
-        }
-        int n4 = 0;
-        for (final ItemButton itemButton8 : this.otherItems) {
-            this.buttonList.add(itemButton8);
-            itemButton8.xPosition = n4 % 6 * 18 + n + 250 - 108 - 10;
-            itemButton8.yPosition = n4 / 6 * 18 + n2 + 28;
-            final ItemButton itemButton9 = itemButton8;
-            ++itemButton9.xPosition;
-            final ItemButton itemButton10 = itemButton8;
-            ++itemButton10.yPosition;
-            ++n4;
-        }
-        final int n5 = n2 + 230 - 19 - 72;
-        final ColoredButton coloredButton = new ColoredButton(-2, n + 20 + 162, n5 + 43, 58, 10,
-                "\u0437\u0430\u0434\u0430\u0442\u044c", -1068149419, -1065386113);
-        if (this.ready || this.lockInput) {
-            coloredButton.enabled = false;
-        }
-        this.buttonList.add(coloredButton);
-        final ColoredButton coloredButton2 = this.readyButton = new ColoredButton(-3, n + 20 + 162, n5 + 55, 58, 12,
-                "\u0413\u043e\u0442\u043e\u0432", -1073709312, -1069563841);
-        if (this.ready || this.lockInput || this.ownBalance == -1 || this.otherBalance == -1) {
-            coloredButton2.enabled = false;
-        }
-        this.buttonList.add(coloredButton2);
-        this.buttonList.add(new ColoredButton(-4, n + 20 + 162, n5 + 69, 58, 12, "\u041e\u0442\u043c\u0435\u043d\u0430",
-                -1065418752, -1061142721));
-        final GuiTextField input = this.input;
-        (this.input = new GuiTextField(this.fontRendererObj, n + 21 + 162, n5 + 28, 56, 12)).setEnabled(true);
-        this.input.setMaxStringLength(8);
-        if (this.ready || this.lockInput) {
-            this.input.setEnabled(false);
-        }
-        if (input != null) {
-            this.input.setText(input.getText());
-        }
-        if (!this.lockInput && this.readyLock > 0) {
-            this.readyButton.enabled = false;
-            this.readyButton.displayString = Integer.toString(this.readyLock / 20);
-        }
-    }
-
-    public void drawToolTip(ItemStack stack, int x, int y) {
-        List list = stack.getTooltip(Minecraft.getMinecraft().thePlayer,
-                Minecraft.getMinecraft().gameSettings.advancedItemTooltips);
-
-        for (int k = 0; k < list.size(); ++k) {
-            if (k == 0) {
-                list.set(k, stack.getRarity().rarityColor + (String) list.get(k));
-            } else {
-                list.set(k, EnumChatFormatting.GRAY + (String) list.get(k));
-            }
-        }
-
-        drawHoveringText(list, x, y, Minecraft.getMinecraft().fontRenderer);
-    }
-
-    public void drawGradientRect(double par1, double par2, double par3, double par4, int col1, int col2) {
-        float f = (float) (col1 >> 24 & 0xFF) / 255F;
-        float f1 = (float) (col1 >> 16 & 0xFF) / 255F;
-        float f2 = (float) (col1 >> 8 & 0xFF) / 255F;
-        float f3 = (float) (col1 & 0xFF) / 255F;
-
-        float f4 = (float) (col2 >> 24 & 0xFF) / 255F;
-        float f5 = (float) (col2 >> 16 & 0xFF) / 255F;
-        float f6 = (float) (col2 >> 8 & 0xFF) / 255F;
-        float f7 = (float) (col2 & 0xFF) / 255F;
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-
-        GL11.glPushMatrix();
-        GL11.glBegin(GL11.GL_QUADS);
-        GL11.glColor4f(f1, f2, f3, f);
-        GL11.glVertex2d(par3, par4);
-        GL11.glVertex2d(par3, par2);
-
-        GL11.glColor4f(f5, f6, f7, f4);
-        GL11.glVertex2d(par1, par2);
-        GL11.glVertex2d(par1, par4);
-        GL11.glEnd();
-        GL11.glPopMatrix();
-
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glDisable(GL11.GL_LINE_SMOOTH);
-        GL11.glShadeModel(GL11.GL_FLAT);
-    }
-
-    public void drawHoveringText(List p_146283_1_, int p_146283_2_, int p_146283_3_, FontRenderer font) {
-        if (!p_146283_1_.isEmpty()) {
-            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-            RenderHelper.disableStandardItemLighting();
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-            int k = 0;
-            Iterator iterator = p_146283_1_.iterator();
-
-            while (iterator.hasNext()) {
-                String s = (String) iterator.next();
-                int l = font.getStringWidth(s);
-
-                if (l > k) {
-                    k = l;
-                }
-            }
-
-            int j2 = p_146283_2_ + 12;
-            int k2 = p_146283_3_ - 12;
-            int i1 = 8;
-
-            if (p_146283_1_.size() > 1) {
-                i1 += 2 + (p_146283_1_.size() - 1) * 10;
-            }
-
-            /*
-             * if (j2 + k > width) { j2 -= 28 + k; }
-             *
-             * if (k2 + i1 + 6 > height) { k2 = height - i1 - 6; }
-             */
-
-            itemRender.zLevel = 300.0F;
-            int j1 = -267386864;
-            drawGradientRect(j2 - 3, k2 - 4, j2 + k + 3, k2 - 3, j1, j1);
-            drawGradientRect(j2 - 3, k2 + i1 + 3, j2 + k + 3, k2 + i1 + 4, j1, j1);
-            drawGradientRect(j2 - 3, k2 - 3, j2 + k + 3, k2 + i1 + 3, j1, j1);
-            drawGradientRect(j2 - 4, k2 - 3, j2 - 3, k2 + i1 + 3, j1, j1);
-            drawGradientRect(j2 + k + 3, k2 - 3, j2 + k + 4, k2 + i1 + 3, j1, j1);
-            int k1 = 1347420415;
-            int l1 = (k1 & 16711422) >> 1 | k1 & -16777216;
-            drawGradientRect(j2 - 3, k2 - 3 + 1, j2 - 3 + 1, k2 + i1 + 3 - 1, k1, l1);
-            drawGradientRect(j2 + k + 2, k2 - 3 + 1, j2 + k + 3, k2 + i1 + 3 - 1, k1, l1);
-            drawGradientRect(j2 - 3, k2 - 3, j2 + k + 3, k2 - 3 + 1, k1, k1);
-            drawGradientRect(j2 - 3, k2 + i1 + 2, j2 + k + 3, k2 + i1 + 3, l1, l1);
-
-            for (int i2 = 0; i2 < p_146283_1_.size(); ++i2) {
-                String s1 = (String) p_146283_1_.get(i2);
-                font.drawStringWithShadow(s1, j2, k2, -1);
-
-                if (i2 == 0) {
-                    k2 += 2;
-                }
-
-                k2 += 10;
-            }
-
-            itemRender.zLevel = 0.0F;
-            GL11.glEnable(GL11.GL_LIGHTING);
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-            RenderHelper.enableStandardItemLighting();
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        }
+    protected void keyTyped(char c, int i){
+        super.keyTyped(c, i);
+        textFieldMoney.textboxKeyTyped(c, i);
     }
 
     @Override
-    public void drawScreen(final int n, final int n2, final float n3) {
-        final int n4 = this.width / 2 - 125;
-        final int n5 = this.height / 2 - 115;
-        GuiScreen.drawRect(n4, n5, n4 + 250, n5 + 230, -1073741824);
-        GuiScreen.drawRect(n4 + 10, n5 + 28, n4 + 10 + 108, n5 + 28 + 108, this.ready ? 1437269930 : 1442840575);
-        GuiScreen.drawRect(n4 + 250 - 10 - 108, n5 + 28, n4 + 250 - 10, n5 + 28 + 108,
-                this.otherReady ? 1437269930 : 1442840575);
-        GuiScreen.drawRect(n4 + 10, n5 + 230 - 10 - 72, n4 + 10 + 162, n5 + 230 - 10,
-                this.ready ? 1437248170 : 1442840575);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, GuiTrade.mc.thePlayer.getCommandSenderName(), n4 + 62, n5 + 1,
-                -22016);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, this.ready
-                        ? "§a\u041e\u0431\u043c\u0435\u043d \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d"
-                        : ("\u0411\u0430\u043b\u0430\u043d\u0441: "
-                        + ((this.ownBalance == -1) ? "\u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0430"
-                        : Integer.valueOf(this.ownBalance))),
-                n4 + 62, n5 + 10, -5592406);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer,
-                "\u041e\u0442\u0434\u0430\u044e \u043c\u043e\u043d\u0435\u0442: §c" + this.ownCash, n4 + 62, n5 + 19,
-                -1);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, this.exchangingWithPlayer, n4 + 187, n5 + 1, -22016);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, this.otherReady
-                        ? "§a\u041e\u0431\u043c\u0435\u043d \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d"
-                        : ("\u0411\u0430\u043b\u0430\u043d\u0441: "
-                        + ((this.otherBalance == -1) ? "\u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0430"
-                        : Integer.valueOf(this.otherBalance))),
-                n4 + 187, n5 + 10, -5592406);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer,
-                "\u041f\u043e\u043b\u0443\u0447\u0430\u044e \u043c\u043e\u043d\u0435\u0442: §a" + this.otherCash,
-                n4 + 187, n5 + 19, -1);
-        final int n6 = n5 + 230 - 19 - 72;
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, "\u0418\u043d\u0432\u0435\u043d\u0442\u0430\u0440\u044c",
-                n4 + 5 + 81, n6, -1);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, "\u041f\u0435\u0440\u0435\u0432\u043e\u0434",
-                n4 + 5 + 81 + 125, n6, -1);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, "\u043c\u043e\u043d\u0435\u0442 \u043b\u043a",
-                n4 + 5 + 81 + 125, n6 + 9, -1);
-        this.drawCenteredString(GuiTrade.mc.fontRenderer, "\u043a\u043e\u043c\u0438\u0441\u0441\u0438\u044f 10%",
-                n4 + 5 + 81 + 125, n6 + 18, -5592406);
-        this.input.drawTextBox();
-        this.hoveredButton = null;
-        super.drawScreen(n, n2, n3);
-        if (this.hoveredButton != null) {
-            GL11.glDisable(2896);
-            GL11.glDisable(2929);
-            final int xPosition = this.hoveredButton.xPosition;
-            final int yPosition = this.hoveredButton.yPosition;
-            if (this.hoveredButton.id != -1337 && !this.lockInput) {
-                this.drawGradientRect(xPosition, yPosition, xPosition + 16, yPosition + 16, -2130706433, -2130706433);
+    protected void mouseClicked(int mouseX, int mouseY, int button){
+        super.mouseClicked(mouseX, mouseY, button);
+        textFieldMoney.mouseClicked(mouseX, mouseY, button);
+    }
+
+    public void updateScreen(){
+        super.updateScreen();
+        if(tradePlayer.isReady && otherPlayer.isReady){
+            if(readyTime-- == 0 && isCreator){
+                FMLProxyPacket packet = TradeMod.network.createPacket(TradePacketHandler.SUCCESSFULLY_TRADE);
+                TradeMod.network.sendToServer(packet);
             }
-            GL11.glEnable(2896);
-            GL11.glEnable(2929);
+        }else{
+            readyTime = TradeMod.TRADE_READY_TIME;
+        }
+
+        textFieldMoney.updateCursorCounter();
+
+        int money = MathHelper.parseIntWithDefault(textFieldMoney.getText(), 0);
+        if(money >= 1 && money < 10){
+            money += 1;
+        }else{
+            money += MathHelper.floor_float(money * 0.1F);
+        }
+        boolean hasMoney = money >= 0 && playerMoney >= money;
+        buttonSetMoney.enabled = (!tradePlayer.isReady || !otherPlayer.isReady) && hasMoney;
+        textFieldMoney.setEnabled(!tradePlayer.isReady || !otherPlayer.isReady);
+    }
+
+    public void onGuiClosed(){
+        if(readyTime > 0){
+            super.onGuiClosed();
         }
     }
 
-    @Override
-    public void onGuiClosed() {
-        this.inventoryItems.clear();
-        this.selectedItems.clear();
-        this.selectedSlots.clear();
-        this.otherItems.clear();
-        final int n = -1;
-        this.otherBalance = n;
-        this.ownBalance = n;
-        final int n2 = 0;
-        this.otherCash = n2;
-        this.ownCash = n2;
-        final boolean lockInput = false;
-        this.ready = lockInput;
-        this.otherReady = lockInput;
-        this.lockInput = lockInput;
-        this.exchangingWithPlayer = null;
-        this.input = null;
-        // net close
+    public void drawGuiContainerForegroundLayer(int x, int y){
+        drawCenteredString(fontRendererObj, tradePlayer.getEntityPlayer().getCommandSenderName(), 61, 6, -1);
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.balance", playerMoney), 61, 16, -1);
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.give", tradePlayer.giveMoney), 61, 26, -1);
+
+        drawCenteredString(fontRendererObj, otherPlayer.getEntityPlayer().getCommandSenderName(), 181, 6, -1);
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.balance", otherMoney), 181, 16, -1);
+        int get = MathHelper.floor_float((100 * otherPlayer.giveMoney) / 110.0F);
+//		if(get > 1 && get < 10){
+//			get -= 1;
+//		}else{
+//			get -= MathHelper.floor_float(get * 0.1F);
+//		}
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.get", get), 181, 26, -1);
+
+        drawCenteredString(fontRendererObj, I18n.format("container.inventory"), 87, ySize - 89, -1);
+
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.commission.part1"), 204, 132, -1);
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.commission.part2"), 205, 141, -1);
+        drawCenteredString(fontRendererObj, I18n.format("gui.trade.label.commission.part3"), 205, 150, -1);
     }
 
-    protected void keyTyped(final char c, final int n) {
-        if ((c >= '0' && c <= '9') || n == 14 || n == 211) {
-            this.input.textboxKeyTyped(c, n);
-        }
-        super.keyTyped(c, n);
-    }
+    public void drawGuiContainerBackgroundLayer(float partialTicks, int x, int y){
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        mc.getTextureManager().bindTexture(TEXTURE);
 
-    protected void mouseClicked(final int n, final int n2, final int n3) {
-        this.input.mouseClicked(n, n2, n3);
-        super.mouseClicked(n, n2, n3);
-    }
+        func_146110_a(guiLeft, guiTop, 0, 0, xSize, ySize, 256, 256);
 
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
-    }
+        if(tradePlayer.isReady && otherPlayer.isReady){
+            drawRect(guiLeft + 8, guiTop + 38, guiLeft + 115, guiTop + 128, new Color(255, 0, 0, 100).getRGB());
+            drawRect(guiLeft + 127, guiTop + 38, guiLeft + 235, guiTop + 128, new Color(255, 0, 0, 100).getRGB());
 
-    @Override
-    public void updateScreen() {
-        if (!this.lockInput) {
-            if (this.readyLock > 0) {
-                --this.readyLock;
-                this.readyButton.displayString = Integer.toString(this.readyLock / 20 + 1);
-            } else if (!this.readyButton.enabled) {
-                this.readyButton.enabled = true;
-                this.readyButton.displayString = "\u0413\u043e\u0442\u043e\u0432";
+            if(readyTime >= 0){
+                GL11.glPushMatrix();
+                GL11.glScalef(5.0F, 5.0F, 1.0F);
+                GL11.glTranslatef(0.0F, 0.0F, 1000.0F);
+                String time = String.valueOf(readyTime / 20 + 1);
+                fontRendererObj.drawString(time, (guiLeft + 125) / 5 - fontRendererObj.getStringWidth(time) / 2, (guiTop + 65) / 5, 0xFF0000);
+                GL11.glPopMatrix();
+            }
+        }else{
+            if(tradePlayer.isReady){
+                drawRect(guiLeft + 8, guiTop + 38, guiLeft + 115, guiTop + 128, new Color(0, 255, 0, 100).getRGB());
+            }
+
+            if(otherPlayer.isReady){
+                drawRect(guiLeft + 127, guiTop + 38, guiLeft + 235, guiTop + 128, new Color(0, 255, 0, 100).getRGB());
             }
         }
-    }
 
-    public class ItemButton extends GuiButton {
-        public final ItemStack is;
-
-        public ItemButton(final int n, final ItemStack ItemStack) {
-            super(n, 0, 0, 16, 16, null);
-            this.is = ItemStack.copy();
-        }
-
-        public ItemButton(final GuiTrade GuiTrade, final ItemStack ItemStack) {
-            this(-1337, ItemStack);
-            this.enabled = false;
-        }
-
-        @Override
-        public void drawButton(final Minecraft Minecraft, final int n, final int n2) {
-            RenderHelper.disableStandardItemLighting();
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-            GL11.glEnable(32826);
-            final int xPosition = this.xPosition;
-            final int yPosition = this.yPosition;
-            drawItemStack(is, xPosition, yPosition);
-            GL11.glPopMatrix();
-            if (n >= this.xPosition && n2 >= this.yPosition && n < this.xPosition + this.width
-                    && n2 < this.yPosition + this.height) {
-                GuiTrade.this.hoveredButton = this;
-            }
-        }
-    }
-
-    public class ColoredButton extends GuiButton {
-        public final int background;
-        public final int hovered;
-        public boolean field_82253_i;
-
-        public ColoredButton(final int n, final int n2, final int n3, final int n4, final int n5, final String s,
-                             final int background, final int hovered) {
-            super(n, n2, n3, n4, n5, s);
-            this.background = background;
-            this.hovered = hovered;
-        }
-
-        @Override
-        public void drawButton(final Minecraft Minecraft, final int n, final int n2) {
-            if (this.visible) {
-                RenderHelper.disableStandardItemLighting();
-                final FontRenderer z = Minecraft.fontRenderer;
-                GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                this.field_82253_i = (n >= this.xPosition && n2 >= this.yPosition && n < this.xPosition + this.width
-                        && n2 < this.yPosition + this.height);
-                GuiScreen.drawRect(this.xPosition, this.yPosition, this.xPosition + this.width,
-                        this.yPosition + this.height,
-                        ((this.enabled && this.field_82253_i)) ? this.hovered : this.background);
-                // this.func_73739_b(Minecraft, n, n2);
-                int n3 = 14737632;
-                if (!this.enabled) {
-                    n3 = -6250336;
-                } else if (this.field_82253_i) {
-                    n3 = 16777120;
-                }
-                this.drawCenteredString(z, this.displayString, this.xPosition + this.width / 2,
-                        this.yPosition + (this.height - 8) / 2, n3);
-            }
-        }
+        textFieldMoney.drawTextBox();
     }
 }
+
+
+//package ua.agravaine.trade.inventory;
+//
+//import java.awt.Color;
+//import java.io.File;
+//
+//import net.minecraft.client.Minecraft;
+//import net.minecraft.client.entity.AbstractClientPlayer;
+//import net.minecraft.client.gui.GuiButton;
+//import net.minecraft.client.gui.inventory.GuiContainer;
+//import net.minecraft.client.renderer.ImageBufferDownload;
+//import net.minecraft.client.renderer.ThreadDownloadImageData;
+//import net.minecraft.client.renderer.texture.ITextureObject;
+//import net.minecraft.client.renderer.texture.TextureManager;
+//import net.minecraft.client.resources.I18n;
+//import net.minecraft.entity.player.EntityPlayer;
+//import net.minecraft.util.ResourceLocation;
+//import net.minecraft.util.StringUtils;
+//
+//import org.lwjgl.opengl.GL11;
+//
+//import TradeMod;
+//import TradePlayer;
+//import TradePacketHandler;
+//import cpw.mods.fml.common.network.internal.FMLProxyPacket;
+//import cpw.mods.fml.relauncher.Side;
+//import cpw.mods.fml.relauncher.SideOnly;
+//
+//@SideOnly(Side.CLIENT)
+//public class GuiTrade extends GuiContainer{
+//
+//	private static final ResourceLocation TEXTURE = new ResourceLocation(TradeMod.MOD_ID, "textures/gui/trade.png");
+//	private static final ResourceLocation DEFAULT_AVATAR = new ResourceLocation(TradeMod.MOD_ID, "textures/gui/default_avatar.png");
+//
+//	private TradePlayer tradePlayer;
+//	private TradePlayer otherPlayer;
+//	
+//	private boolean isReady;
+//	private int readyTime;
+//	
+//	public GuiTrade(EntityPlayer player){
+//		super(new ContainerTrade(player));
+//		tradePlayer = TradePlayer.forPlayer(player);
+//		otherPlayer = TradePlayer.forPlayer(tradePlayer.other);
+//		xSize = 264;
+//		ySize = 207;
+//	}
+//
+//	public void initGui(){
+//		super.initGui();
+//		buttonList.add(new GuiButton(0, guiLeft + 101, guiTop + ySize - 43 + 10, 70, 20, I18n.format("gui.trade.button.ready")));
+//		buttonList.add(new GuiButton(1, guiLeft + xSize - 84, guiTop + ySize - 43 + 10, 70, 20, I18n.format("gui.trade.button.cancel")));
+//	}
+//	
+//	public void actionPerformed(GuiButton button){
+//		if(button.id == 0){
+//			isReady = !isReady;
+//			button.displayString = isReady ? I18n.format("gui.trade.button.notReady") : I18n.format("gui.trade.button.ready");
+//			FMLProxyPacket packet = TradeMod.network.createPacket(TradePacketHandler.I_AM_READY, isReady);
+//			TradeMod.network.sendToServer(packet);
+//		}
+//	}
+//	
+//	public void updateScreen(){
+//		super.updateScreen();
+//		if(tradePlayer.isReady && otherPlayer.isReady){
+//			if(readyTime-- <= 0){
+//				FMLProxyPacket packet = TradeMod.network.createPacket(TradePacketHandler.SUCCESSFULLY_TRADE);
+//				TradeMod.network.sendToServer(packet);
+//			}
+//		}else{
+//			readyTime = TradeMod.TRADE_READY_TIME;
+//		}
+//	}
+//	
+//	public void onGuiClosed(){
+//		if(readyTime > 0){
+//			super.onGuiClosed();
+//		}
+//	}
+//	
+//	public void drawGuiContainerForegroundLayer(int x, int y){
+////		if(tradePlayer.getEntityPlayer() == null || otherPlayer.getEntityPlayer() == null){
+////			return;
+////		}
+//		String s = tradePlayer.getEntityPlayer().getCommandSenderName() + ", Баланс: 100, Отдаю: 40";
+//		String s1 = otherPlayer.getEntityPlayer().getCommandSenderName() + ", Баланс: 1400, Отдаю: 0";
+//		String s2 = tradePlayer.getEntityPlayer().getCommandSenderName();
+//		fontRendererObj.drawString(s, 110, 8, -1);
+//		fontRendererObj.drawString(s1, 110, 91, -1);
+//		fontRendererObj.drawString(s2, 30, 17, -1);
+//		
+//		fontRendererObj.drawString("Перевод монет(лк) комиссия 10%", 30, 7, -1);
+////		if(readyTime != TradeMod.TRADE_READY_TIME && readyTime > 0){
+////			String s2 = I18n.format("gui.readyTime", (readyTime + 1) / 20);//"Обмен состоится через " + String.valueOf(readyTime / 20) + " секунд.";
+////			fontRendererObj.drawString(s2, xSize - 87 - fontRendererObj.getStringWidth(s2) / 2, -12, new Color(255, 0, 0, 100).getRGB());
+////		}
+//	}
+//
+//	public void drawGuiContainerBackgroundLayer(float partialTicks, int x, int y){
+//		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+//		mc.getTextureManager().bindTexture(TEXTURE);
+//		
+//		// My container texture
+//		func_146110_a(width / 2 - xSize / 2, height / 2 - 207 / 2, 0, 0, 86, 207, 512, 512);
+//		// My trade texture
+//		func_146110_a(width / 2 - xSize / 2 + 88, height / 2 - 207 / 2, 87, 0, 176, 81, 512, 512);
+//		// Other trade texture
+//		func_146110_a(width / 2 - xSize / 2 + 88, height / 2 - 207 / 2 + 83, 87, 0, 176, 81, 512, 512);
+//		
+//		drawPlayerHead(guiLeft + 7, guiTop + 6, 20, tradePlayer.getEntityPlayer().getCommandSenderName());
+//		drawPlayerHead(guiLeft + 95, guiTop + 6, 12, tradePlayer.getEntityPlayer().getCommandSenderName());
+//		drawPlayerHead(guiLeft + 95, guiTop + 89, 12, otherPlayer.getEntityPlayer().getCommandSenderName());
+//		
+//		if(tradePlayer.isReady){
+//			drawRect(guiLeft + 95, guiTop + 20, guiLeft + 257, guiTop + 74, new Color(0, 255, 0, 100).getRGB());
+//		}
+//		
+//		if(otherPlayer.isReady){
+//			drawRect(guiLeft + 95, guiTop + 103, guiLeft + 257, guiTop + 157, new Color(0, 255, 0, 100).getRGB());
+//		}
+//	}
+//	
+//	private void drawPlayerHead(int x, int y, int size, String nick){
+//		ResourceLocation skin = new ResourceLocation("textures/players/avatars/" + nick + ".png");
+//		ITextureObject skinTexture = mc.getTextureManager().getTexture(skin);
+//		if(skinTexture == null){
+//			skinTexture = new ThreadDownloadImageData(null, String.format(TradeMod.PLAYERS_AVATARS_URL, 64, nick), DEFAULT_AVATAR, null);
+//			mc.getTextureManager().loadTexture(skin, skinTexture);
+//		}
+//		mc.getTextureManager().bindTexture(skin);
+//		func_146110_a(x, y, 0, 0, size, size, size, size);
+//	}
+//}
