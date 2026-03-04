@@ -1,0 +1,133 @@
+// 
+// Decompiled by Procyon v0.5.36
+// 
+
+package com.flansmod.client.model.svz;
+
+import com.flansmod.client.model.ModelAttachment;
+import com.flansmod.client.tmt.ModelRendererTurbo;
+import net.minecraft.client.model.ModelBase;
+
+public class ModelPUScope extends ModelAttachment {
+    int textureX;
+    int textureY;
+
+    public ModelPUScope() {
+        this.textureX = 128;
+        this.textureY = 64;
+        (this.attachmentModel = new ModelRendererTurbo[33])[0] = new ModelRendererTurbo(this, 0, 0,
+                this.textureX, this.textureY);
+        this.attachmentModel[1] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[2] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[3] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[4] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[5] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[6] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[7] = new ModelRendererTurbo(this, 0, 33, this.textureX, this.textureY);
+        this.attachmentModel[8] = new ModelRendererTurbo(this, 0, 0, this.textureX, this.textureY);
+        this.attachmentModel[9] = new ModelRendererTurbo(this, 70, 25, this.textureX, this.textureY);
+        this.attachmentModel[10] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[11] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[12] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[13] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[14] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[15] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[16] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[17] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[18] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[19] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[20] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[21] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[22] = new ModelRendererTurbo(this, 70, 25, this.textureX, this.textureY);
+        this.attachmentModel[23] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[24] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[25] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[26] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[27] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[28] = new ModelRendererTurbo(this, 0, 45, this.textureX, this.textureY);
+        this.attachmentModel[29] = new ModelRendererTurbo(this, 0, 33, this.textureX, this.textureY);
+        this.attachmentModel[30] = new ModelRendererTurbo(this, 0, 23, this.textureX, this.textureY);
+        this.attachmentModel[31] = new ModelRendererTurbo(this, 6, 25, this.textureX, this.textureY);
+        this.attachmentModel[32] = new ModelRendererTurbo(this, 6, 25, this.textureX, this.textureY);
+        this.attachmentModel[0].addBox(0.0f, 0.0f, 0.0f, 45, 6, 1, 0.0f);
+        this.attachmentModel[0].setRotationPoint(-23.0f, 11.0f, -6.0f);
+        this.attachmentModel[1].addBox(0.0f, 0.0f, 0.0f, 45, 6, 1, 0.0f);
+        this.attachmentModel[1].setRotationPoint(-23.0f, 11.0f, 5.0f);
+        this.attachmentModel[2].addBox(0.0f, 0.0f, -1.0f, 45, 4, 1, 0.0f);
+        this.attachmentModel[2].setRotationPoint(-23.0f, 17.0f, 6.0f);
+        this.attachmentModel[2].rotateAngleX = -0.7853982f;
+        this.attachmentModel[3].addBox(0.0f, 0.0f, 0.0f, 45, 4, 1, 0.0f);
+        this.attachmentModel[3].setRotationPoint(-23.0f, 17.0f, -6.0f);
+        this.attachmentModel[3].rotateAngleX = 0.7853982f;
+        this.attachmentModel[4].addBox(0.0f, 0.0f, 0.0f, 45, 1, 6, 0.0f);
+        this.attachmentModel[4].setRotationPoint(-23.0f, 19.0f, -3.0f);
+        this.attachmentModel[5].addBox(0.0f, -4.0f, -1.0f, 45, 4, 1, 0.0f);
+        this.attachmentModel[5].setRotationPoint(-23.0f, 11.0f, 6.0f);
+        this.attachmentModel[5].rotateAngleX = 0.7853982f;
+        this.attachmentModel[6].addBox(0.0f, -4.0f, 0.0f, 45, 4, 1, 0.0f);
+        this.attachmentModel[6].setRotationPoint(-23.0f, 11.0f, -6.0f);
+        this.attachmentModel[6].rotateAngleX = -0.7853982f;
+        this.attachmentModel[7].addBox(0.0f, 0.0f, 0.0f, 6, 6, 3, 0.0f);
+        this.attachmentModel[7].setRotationPoint(-6.0f, 11.0f, 5.733333f);
+        this.attachmentModel[8].addBox(0.0f, 0.0f, 0.0f, 45, 1, 6, 0.0f);
+        this.attachmentModel[8].setRotationPoint(-23.0f, 8.0f, -3.0f);
+        this.attachmentModel[9].addBox(0.0f, 0.0f, 0.0f, 6, 22, 2, 0.0f);
+        this.attachmentModel[9].setRotationPoint(13.0f, -5.0f, -8.0f);
+        this.attachmentModel[10].addBox(0.0f, 0.0f, 0.0f, 6, 6, 1, 0.0f);
+        this.attachmentModel[10].setRotationPoint(13.0f, 11.0f, 6.0f);
+        this.attachmentModel[11].addBox(0.0f, -6.0f, 0.0f, 6, 6, 1, 0.0f);
+        this.attachmentModel[11].setRotationPoint(13.0f, 11.0f, -7.0f);
+        this.attachmentModel[11].rotateAngleX = -0.7853982f;
+        this.attachmentModel[12].addBox(0.0f, -6.0f, -1.0f, 6, 6, 1, 0.0f);
+        this.attachmentModel[12].setRotationPoint(13.0f, 11.0f, 7.0f);
+        this.attachmentModel[12].rotateAngleX = 0.7853982f;
+        this.attachmentModel[13].addBox(0.0f, 0.0f, 0.0f, 6, 6, 1, 0.0f);
+        this.attachmentModel[13].setRotationPoint(13.0f, 17.0f, -7.0f);
+        this.attachmentModel[13].rotateAngleX = 0.7853982f;
+        this.attachmentModel[14].addBox(0.0f, 0.0f, -1.0f, 6, 6, 1, 0.0f);
+        this.attachmentModel[14].setRotationPoint(13.0f, 17.0f, 7.0f);
+        this.attachmentModel[14].rotateAngleX = -0.7853982f;
+        this.attachmentModel[15].addBox(0.0f, 0.0f, 0.0f, 6, 1, 6, 0.0f);
+        this.attachmentModel[15].setRotationPoint(13.0f, 20.0f, -3.0f);
+        this.attachmentModel[16].addBox(0.0f, 0.0f, 0.0f, 6, 1, 6, 0.0f);
+        this.attachmentModel[16].setRotationPoint(13.0f, 7.0f, -3.0f);
+        this.attachmentModel[17].addBox(0.0f, -6.0f, -1.0f, 7, 6, 1, 0.0f);
+        this.attachmentModel[17].setRotationPoint(1.0f, 11.0f, 7.0f);
+        this.attachmentModel[17].rotateAngleX = 0.7853982f;
+        this.attachmentModel[18].addBox(0.0f, 0.0f, 0.0f, 7, 1, 6, 0.0f);
+        this.attachmentModel[18].setRotationPoint(1.0f, 7.0f, -3.0f);
+        this.attachmentModel[19].addBox(0.0f, -6.0f, 0.0f, 7, 6, 1, 0.0f);
+        this.attachmentModel[19].setRotationPoint(1.0f, 11.0f, -7.0f);
+        this.attachmentModel[19].rotateAngleX = -0.7853982f;
+        this.attachmentModel[20].addBox(0.0f, 0.0f, 0.0f, 7, 6, 1, 0.0f);
+        this.attachmentModel[20].setRotationPoint(1.0f, 11.0f, 6.0f);
+        this.attachmentModel[21].addBox(0.0f, 0.0f, 0.0f, 7, 1, 6, 0.0f);
+        this.attachmentModel[21].setRotationPoint(1.0f, 20.0f, -3.0f);
+        this.attachmentModel[22].addBox(0.0f, 0.0f, 0.0f, 7, 22, 2, 0.0f);
+        this.attachmentModel[22].setRotationPoint(1.0f, -5.0f, -8.0f);
+        this.attachmentModel[23].addBox(0.0f, 0.0f, 0.0f, 7, 6, 1, 0.0f);
+        this.attachmentModel[23].setRotationPoint(1.0f, 17.0f, -7.0f);
+        this.attachmentModel[23].rotateAngleX = 0.7853982f;
+        this.attachmentModel[24].addBox(0.0f, 0.0f, -1.0f, 7, 6, 1, 0.0f);
+        this.attachmentModel[24].setRotationPoint(1.0f, 17.0f, 7.0f);
+        this.attachmentModel[24].rotateAngleX = -0.7853982f;
+        this.attachmentModel[25].addBox(0.0f, 0.0f, 0.0f, 5, 5, 2, 0.0f);
+        this.attachmentModel[25].setRotationPoint(8.0f, 6.0f, -8.0f);
+        this.attachmentModel[26].addBox(0.0f, 0.0f, 0.0f, 32, 6, 6, 0.0f);
+        this.attachmentModel[26].setRotationPoint(-10.0f, -5.0f, -8.0f);
+        this.attachmentModel[27].addBox(0.0f, 0.0f, 0.0f, 8, 5, 2, 0.0f);
+        this.attachmentModel[27].setRotationPoint(13.0f, -4.5f, -9.5f);
+        this.attachmentModel[28].addBox(-7.0f, 0.0f, 0.0f, 7, 5, 2, 0.0f);
+        this.attachmentModel[28].setRotationPoint(-2.5f, -4.5f, -8.0f);
+        this.attachmentModel[28].rotateAngleY = -0.2792527f;
+        this.attachmentModel[29].addBox(0.0f, 0.0f, 0.0f, 6, 3, 6, 0.0f);
+        this.attachmentModel[29].setRotationPoint(-6.0f, 20.0f, -3.0f);
+        this.attachmentModel[30].addBox(0.0f, 0.0f, 0.0f, 0, 5, 1, 0.0f);
+        this.attachmentModel[30].setRotationPoint(17.0f, 9.0f, -0.5f);
+        this.attachmentModel[31].addBox(0.0f, 0.0f, 0.0f, 0, 1, 4, 0.0f);
+        this.attachmentModel[31].setRotationPoint(17.0f, 13.5f, -5.0f);
+        this.attachmentModel[32].addBox(0.0f, 0.0f, 0.0f, 0, 1, 4, 0.0f);
+        this.attachmentModel[32].setRotationPoint(17.0f, 13.5f, 1.0f);
+        this.renderOffset = 0.0f;
+    }
+}
