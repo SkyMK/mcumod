@@ -1,4 +1,4 @@
-package mcu.client.gui.menu;
+package mcu.client.gui.utils;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;

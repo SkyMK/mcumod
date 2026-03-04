@@ -1,70 +1,23 @@
-package mcu;
+// 
+// Decompiled by Procyon v0.5.36
+// 
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import mcu.client.gui.house.ContainerHouse;
-import mcu.entity.EntityHouse;
-import mcu.items.Items;
-import mcu.network.PacketHandler;
-import mcu.server.ServerEvent;
-import net.minecraft.entity.Entity;
+package mcu.inventory.proxy;
+
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPostInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.common.MinecraftForge;
 
-public class CommonProxy {
-    public CommonProxy() {
-    }
+public abstract class CommonProxy {
+    public abstract void preInit(final FMLPreInitializationEvent p0);
 
-    private static Container getContainer(final int id, final EntityPlayer player, final Entity entity,
-                                          NBTTagCompound nbt) {
-        switch (id) {
-            case 0:
-                if (!(entity instanceof EntityHouse))
-                    return null;
-                return new ContainerHouse(player, (EntityHouse) entity, nbt);
-            default:
-                return null;
-        }
-    }
+    public abstract void init(final FMLInitializationEvent p0);
 
-    public void preInit() {
-    }
+    public abstract void postInit(final FMLPostInitializationEvent p0);
 
-    public void init() {
-        Items.registerItems();
-        ServerEvent handler = new ServerEvent();
-
-        MinecraftForge.EVENT_BUS.register(handler);
-        FMLCommonHandler.instance().bus().register(handler);
-
-    }
-
-    public void postInit() {
-    }
-
-    public void openGuiHouse(byte id, EntityPlayer player, Entity entity, NBTTagCompound nbt) {
-        if (player instanceof EntityPlayerMP) {
-            EntityPlayerMP playerMP = (EntityPlayerMP) player;
-            Container container = getContainer(id, player, entity, nbt);
-            if (container == null)
-                return;
-            playerMP.closeContainer();
-            playerMP.getNextWindowId();
-            int windowId = playerMP.currentWindowId;
-
-            NBTTagCompound tag = new NBTTagCompound();
-            tag.setInteger("windowID", windowId);
-            tag.setByte("id", id);
-            tag.setInteger("entityID", entity.getEntityId());
-            tag.setString("HouseTime", nbt.getString("HouseTime"));
-            DayZ.network.sendTo(DayZ.network.createPacket(PacketHandler.OPEN_GUI_HOUSE, tag),
-                    (EntityPlayerMP) player);
-
-            player.openContainer = container;
-            playerMP.openContainer.windowId = windowId;
-            playerMP.openContainer.addCraftingToCrafters(playerMP);
-        }
+    public EntityPlayer getEntityPlayer(final MessageContext ctx) {
+        return ctx.getServerHandler().playerEntity;
     }
 }
